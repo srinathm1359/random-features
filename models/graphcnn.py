@@ -7,7 +7,7 @@ sys.path.append("models/")
 from mlp import MLP
 
 class GraphCNN(nn.Module):
-    def __init__(self, num_layers, num_mlp_layers, input_dim, hidden_dim, output_dim, final_dropout, learn_eps, graph_pooling_type, neighbor_pooling_type, device):
+    def __init__(self, num_layers, num_mlp_layers, input_dim, hidden_dim, output_dim, final_dropout, learn_eps, graph_pooling_type, neighbor_pooling_type, random, node_classification, device):
         '''
             num_layers: number of layers in the neural networks (INCLUDING the input layer)
             num_mlp_layers: number of layers in mlps (EXCLUDING the input layer)
@@ -23,6 +23,9 @@ class GraphCNN(nn.Module):
 
         super(GraphCNN, self).__init__()
 
+        if random:
+            input_dim += 1
+        
         self.final_dropout = final_dropout
         self.device = device
         self.num_layers = num_layers
@@ -30,6 +33,8 @@ class GraphCNN(nn.Module):
         self.neighbor_pooling_type = neighbor_pooling_type
         self.learn_eps = learn_eps
         self.eps = nn.Parameter(torch.zeros(self.num_layers-1))
+        self.random = random
+        self.node_classification = node_classification
 
         ###List of MLPs
         self.mlps = torch.nn.ModuleList()
@@ -53,7 +58,9 @@ class GraphCNN(nn.Module):
             else:
                 self.linears_prediction.append(nn.Linear(hidden_dim, output_dim))
 
-
+        #! additional linear layer
+        self.fc1 = nn.Linear(hidden_dim, output_dim)
+                
     def __preprocess_neighbors_maxpool(self, batch_graph):
         ###create padded_neighbor_list in concatenated graph
 
@@ -193,7 +200,14 @@ class GraphCNN(nn.Module):
 
 
     def forward(self, batch_graph):
-        X_concat = torch.cat([graph.node_features for graph in batch_graph], 0).to(self.device)
+        
+        if self.random:
+            X_concat = torch.cat([graph.node_features for graph in batch_graph], 0)
+            self.r = torch.randint(self.random, size=(len(X_concat), 1)).float() / self.random
+            X_concat = torch.cat([X_concat, self.r], 1).to(self.device)
+        else:
+            X_concat = torch.cat([graph.node_features for graph in batch_graph], 0).to(self.device)
+            self.r = torch.randint(100, size=(len(X_concat), 1)).float() / 100
         graph_pool = self.__preprocess_graphpool(batch_graph)
 
         if self.neighbor_pooling_type == "max":
@@ -217,6 +231,10 @@ class GraphCNN(nn.Module):
 
             hidden_rep.append(h)
 
+        if self.node_classification:
+            self.h = h
+            return torch.softmax(self.fc1(h), 1)
+    
         score_over_layer = 0
     
         #perform pooling over all nodes in each graph in every layer

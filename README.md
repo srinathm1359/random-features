@@ -1,24 +1,12 @@
-# How Powerful are Graph Neural Networks?
+# Graph Neural Networks with Random Features (SDM 2021)
 
-This repository is the official PyTorch implementation of the experiments in the following paper: 
+We prove that adding random features to each node strengthens the expressive power of graph neural networks. The complete paper including appendices is available on [arXiv](https://arxiv.org/abs/2002.03155).
 
-Keyulu Xu*, Weihua Hu*, Jure Leskovec, Stefanie Jegelka. How Powerful are Graph Neural Networks? ICLR 2019. 
+This repository is forked from https://github.com/weihua916/powerful-gnns
 
-[arXiv](https://arxiv.org/abs/1810.00826) [OpenReview](https://openreview.net/forum?id=ryGs6iA5Km) 
-
-If you make use of the code/experiment or GIN algorithm in your work, please cite our paper (Bibtex below).
-```
-@inproceedings{
-xu2018how,
-title={How Powerful are Graph Neural Networks?},
-author={Keyulu Xu and Weihua Hu and Jure Leskovec and Stefanie Jegelka},
-booktitle={International Conference on Learning Representations},
-year={2019},
-url={https://openreview.net/forum?id=ryGs6iA5Km},
-}
-```
 
 ## Installation
+
 Install PyTorch following the instuctions on the [official website] (https://pytorch.org/). The code has been tested over PyTorch 0.4.1 and 1.0.0 versions.
 
 Then install the other dependencies.
@@ -27,26 +15,50 @@ pip install -r requirements.txt
 ```
 
 ## Test run
-Unzip the dataset file
-```
-unzip dataset.zip
-```
-
-and run
 
 ```
-python main.py
+$ bash exec.sh
 ```
 
-The default parameters are not the best performing-hyper-parameters used to reproduce our results in the paper. Hyper-parameters need to be specified through the commandline arguments. Please refer to our paper for the details of how we set the hyper-parameters. For instance, for the COLLAB and IMDB datasets, you need to add `--degree_as_tag` so that the node degrees are used for input node features.
+## Datasets
 
-To learn hyper-parameters to be specified, please type
+We release new synthetic benchmarks we used in the paper. All datasets are stored in the `dataset` directory. Each file describes a set of graphs with the following format:
+
 ```
-python main.py --help
+s 0
+G_1
+G_2
+...
+G_s
 ```
 
+where `s` is the number of graphs, there is `0` for compatibility with graph classification datasets, `G_i` describes a graph with the following format:
 
+```
+n
+y_1 d_1 v_{1, 1} v_{1, 2} ... v_{1, d_1}
+y_2 d_2 v_{2, 1} v_{2, 2} ... v_{2, d_2}
+...
+y_n d_n v_{n, 1} v_{n, 2} ... v_{n, d_n}
+```
 
-## Cross-validation strategy in the paper
-The cross-validation in our paper only uses training and validation sets (no test set) due to small dataset size. Specifically, after obtaining 10 validation curves corresponding to 10 folds, we first took average of validation curves across the 10 folds (thus, we obtain an averaged validation curve), and then selected a single epoch that achieved the maximum averaged validation accuracy. Finally, the standard devision over the 10 folds was computed at the selected epoch. 
+where `n` is the number of nodes, the `(i+2)`-th line describes node `i` (node ids are 0-indexed), `y_i` is the label of node `i`, `d_i` is the degree of node `i`, `v_{i, j}` is the `j`-th neighbor of node `i`.
 
+You can also generate (more) synthetic datasets by `dataset_gen.py`.
+
+The MDS datasets do not contain the label information (i.e., `y_i = 0` for all `i`). We generate labels dynamically using `algorithms.py` when we test models.
+
+## Feedback and Contact
+
+Please feel free to contact me at r.sato AT ml.ist.i.kyoto-u.ac.jp, or to open issues.
+
+## Citation
+
+```
+@inproceedings{sato2021random,
+  author    = {Ryoma Sato and Makoto Yamada and Hisashi Kashima},
+  title     = {Random Features Strengthen Graph Neural Networks},
+  booktitle = {Proceedings of the 2021 {SIAM} International Conference on Data Mining, {SDM}},
+  year      = {2021},
+}
+```
