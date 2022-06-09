@@ -2,7 +2,7 @@
 
 We prove that adding random features to each node strengthens the expressive power of graph neural networks. The complete paper including appendices is available on [arXiv](https://arxiv.org/abs/2002.03155).
 
-This repository is forked from https://github.com/weihua916/powerful-gnns
+This repository is forked from https://github.com/joisino/random-features.
 
 
 ## Installation
